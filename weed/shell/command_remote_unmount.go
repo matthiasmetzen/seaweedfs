@@ -34,6 +34,9 @@ func (c *commandRemoteUnmount) Help() string {
 	# unmount the mounted directory and remove its cache
 	remote.unmount -dir=/xxx
 
+	# unmount the mounted directory without removing its cache
+	remote.unmount -dir=/xxx -retain
+
 `
 }
 
@@ -42,6 +45,7 @@ func (c *commandRemoteUnmount) Do(args []string, commandEnv *CommandEnv, writer 
 	remoteMountCommand := flag.NewFlagSet(c.Name(), flag.ContinueOnError)
 
 	dir := remoteMountCommand.String("dir", "", "a directory in filer")
+	retain := remoteMountCommand.Bool("retain", false, "do not purge mounted data")
 
 	if err = remoteMountCommand.Parse(args); err != nil {
 		return nil
@@ -66,10 +70,12 @@ func (c *commandRemoteUnmount) Do(args []string, commandEnv *CommandEnv, writer 
 		return fmt.Errorf("delete mount mapping: %v", err)
 	}
 
-	// purge mounted data
-	fmt.Fprintf(writer, "purge %s ...\n", *dir)
-	if err = c.purgeMountedData(commandEnv, *dir); err != nil {
-		return fmt.Errorf("purge mounted data: %v", err)
+	if !*retain {
+		// purge mounted data
+		fmt.Fprintf(writer, "purge %s ...\n", *dir)
+		if err = c.purgeMountedData(commandEnv, *dir); err != nil {
+			return fmt.Errorf("purge mounted data: %v", err)
+		}
 	}
 
 	// reset remote sync offset in case the folder is mounted again
