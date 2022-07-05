@@ -57,7 +57,6 @@ func init() {
 	remoteGatewayOptions.timeAgo = cmdFilerRemoteGateway.Flag.Duration("timeAgo", 0, "start time before now. \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\"")
 	remoteGatewayOptions.include = cmdFilerRemoteGateway.Flag.String("include", "", "pattens of new bucket names, e.g., s3*")
 	remoteGatewayOptions.exclude = cmdFilerRemoteGateway.Flag.String("exclude", "", "pattens of new bucket names, e.g., local*")
-	remoteGatewayOptions.include = cmdFilerRemoteGateway.Flag.String("include", "", "pattens of new bucket names, e.g., s3*")
 	remoteGatewayOptions.allowCreate = cmdFilerRemoteGateway.Flag.Bool("allowCreate", true, "propagate the creation of new buckets")
 	remoteGatewayOptions.allowDelete = cmdFilerRemoteGateway.Flag.Bool("allowDelete", true, "propagate the deletion of buckets")
 }
