@@ -121,9 +121,6 @@ func (option *RemoteGatewayOptions) makeBucketedEventProcessor(filerSource *sour
 
 	}
 	handleDeleteBucket := func(entry *filer_pb.Entry) error {
-		if !*option.allowDelete {
-			return nil
-		}
 		if !entry.IsDirectory {
 			return nil
 		}
@@ -133,9 +130,11 @@ func (option *RemoteGatewayOptions) makeBucketedEventProcessor(filerSource *sour
 			return fmt.Errorf("findRemoteStorageClient %s: %v", entry.Name, err)
 		}
 
-		glog.V(0).Infof("delete remote bucket %s", remoteStorageMountLocation.Bucket)
-		if err := client.DeleteBucket(remoteStorageMountLocation.Bucket); err != nil {
-			return fmt.Errorf("delete remote bucket %s: %v", remoteStorageMountLocation.Bucket, err)
+		if !*option.allowDelete {
+			glog.V(0).Infof("delete remote bucket %s", remoteStorageMountLocation.Bucket)
+			if err := client.DeleteBucket(remoteStorageMountLocation.Bucket); err != nil {
+				return fmt.Errorf("delete remote bucket %s: %v", remoteStorageMountLocation.Bucket, err)
+			}
 		}
 
 		bucketPath := util.FullPath(option.bucketsDir).Child(entry.Name)
