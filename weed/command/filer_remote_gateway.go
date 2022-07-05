@@ -24,6 +24,8 @@ type RemoteGatewayOptions struct {
 	createBucketRandomSuffix *bool
 	include                  *string
 	exclude                  *string
+	allowCreate				 *bool
+	allowDelete				 *bool
 
 	mappings    *remote_pb.RemoteStorageMapping
 	remoteConfs map[string]*remote_pb.RemoteConf
@@ -55,7 +57,9 @@ func init() {
 	remoteGatewayOptions.timeAgo = cmdFilerRemoteGateway.Flag.Duration("timeAgo", 0, "start time before now. \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\"")
 	remoteGatewayOptions.include = cmdFilerRemoteGateway.Flag.String("include", "", "pattens of new bucket names, e.g., s3*")
 	remoteGatewayOptions.exclude = cmdFilerRemoteGateway.Flag.String("exclude", "", "pattens of new bucket names, e.g., local*")
-	remoteGatewayOptions.clientId = util.RandomInt32()
+	remoteGatewayOptions.include = cmdFilerRemoteGateway.Flag.String("include", "", "pattens of new bucket names, e.g., s3*")
+	remoteGatewayOptions.allowCreate = cmdFilerRemoteGateway.Flag.Bool("allowCreate", true, "propagate the creation of new buckets")
+	remoteGatewayOptions.allowDelete = cmdFilerRemoteGateway.Flag.Bool("allowDelete", true, "propagate the deletion of buckets")
 }
 
 var cmdFilerRemoteGateway = &Command{

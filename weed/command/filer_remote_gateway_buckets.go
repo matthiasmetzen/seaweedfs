@@ -46,6 +46,9 @@ func (option *RemoteGatewayOptions) followBucketUpdatesAndUploadToRemote(filerSo
 func (option *RemoteGatewayOptions) makeBucketedEventProcessor(filerSource *source.FilerSource) (pb.ProcessMetadataFunc, error) {
 
 	handleCreateBucket := func(entry *filer_pb.Entry) error {
+		if !*option.allowCreate {
+			return nil
+		}
 		if !entry.IsDirectory {
 			return nil
 		}
@@ -118,6 +121,9 @@ func (option *RemoteGatewayOptions) makeBucketedEventProcessor(filerSource *sour
 
 	}
 	handleDeleteBucket := func(entry *filer_pb.Entry) error {
+		if !*option.allowDelete {
+			return nil
+		}
 		if !entry.IsDirectory {
 			return nil
 		}
