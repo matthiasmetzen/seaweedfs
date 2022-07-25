@@ -236,18 +236,18 @@ func updateLocalEntry(filerClient filer_pb.FilerClient, dir string, entry *filer
 	})
 }
 
-func findMountsRecursive(option *RemoteSyncOptions, dir string) ([]*remote_pb.RemoteStorageLocation, error) {
-	var mappings []*remote_pb.RemoteStorageLocation
-	mounts, err := filer.ReadMountMappings(option.grpcDialOption, pb.ServerAddress(*option.filerAddress))
+func findMountsRecursive(option *RemoteSyncOptions, dir string) (map[string]*remote_pb.RemoteStorageLocation, error) {
+	mappings, err := filer.ReadMountMappings(option.grpcDialOption, pb.ServerAddress(*option.filerAddress))
 	if err != nil {
-		return mappings, err
+		return nil, err
 	}
 
-	for _, mapping := range mounts.GetMappings() {
-		if strings.HasPrefix(mapping.Path, dir) {
-			mappings = append(mappings, mapping)
+	mounts := make(map[string]*remote_pb.RemoteStorageLocation)
+	for localDir, remoteLocation := range mappings.Mappings {
+		if strings.HasPrefix(localDir, dir) {
+			mounts[localDir] = remoteLocation
 		}
 	}
 
-	return mappings, nil
+	return mounts, nil
 }

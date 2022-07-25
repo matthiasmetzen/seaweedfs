@@ -8,7 +8,6 @@ import (
 	"github.com/chrislusf/seaweedfs/weed/glog"
 	"github.com/chrislusf/seaweedfs/weed/pb"
 	"github.com/chrislusf/seaweedfs/weed/pb/filer_pb"
-	"github.com/chrislusf/seaweedfs/weed/pb/remote_pb"
 	"github.com/chrislusf/seaweedfs/weed/replication/source"
 	"github.com/chrislusf/seaweedfs/weed/security"
 	"github.com/chrislusf/seaweedfs/weed/util"
@@ -88,10 +87,11 @@ func runFilerRemoteSynchronize(cmd *Command, args []string) bool {
 	)
 
 	if dir != "" {
-		syncFn := func(dir string) bool {
+		syncFn := func(options *RemoteSyncOptions, dir string) bool {
 			fmt.Printf("synchronize %s to remote storage...\n", dir)
 			util.RetryForever("filer.remote.sync "+dir, func() error {
-				return followUpdatesAndUploadToRemote(&remoteSyncOptions, filerSource, dir)
+				//clone struct here to set new clientID
+				return followUpdatesAndUploadToRemote(options, filerSource, dir)
 			}, func(err error) bool {
 				if err != nil {
 					glog.Errorf("synchronize %s: %v", dir, err)
@@ -102,29 +102,37 @@ func runFilerRemoteSynchronize(cmd *Command, args []string) bool {
 		}
 
 		if recursive {
+			// get all mounts inside dir
 			mappings, err := findMountsRecursive(&remoteSyncOptions, dir)
 			if err != nil {
 				glog.Errorf("findMountsRecursive: %v", err)
 			}
-
+			
+			// setup for goroutine
 			results := make(chan bool, len(mappings))
 			wg := new(sync.WaitGroup)
+			wg.Add(len(mappings))
 
-			for _, mapping := range mappings {
-				wg.Add(1)
-				go func(m *remote_pb.RemoteStorageLocation) {
-					results <- syncFn(m.GetPath())
+			for localDir := range mappings {
+				go func(dir string) {
+					options := remoteSyncOptions
+					// need to use a different ID for every directory
+					options.clientId = util.RandomInt32()
+					results <- syncFn(&options, dir)
 					defer wg.Done()
-				}(mapping)
+				}(localDir)
 			}
+
 			wg.Wait()
+			close(results)
+
 			for result := range results {
 				if !result {
 					return false
 				}
 			}
 		} else {
-			return syncFn(dir)
+			return syncFn(&remoteSyncOptions, dir)
 		}
 	}
 
